@@ -10,155 +10,46 @@
 --   If you redistribute this software, you must link to ORIGINAL repository at https://github.com/ESX-Org/es_extended
 --   This copyright should appear in every part of the project code
 
+M('persistent')
+
 module.Inventories = {}
+
+Inventory = Persist('iventory', 'id', Enrolable)
+
+Inventory.define({
+  {name = 'id',         field = {name = 'id',         type = 'INT',        length = nil, default = nil,                extra = 'NOT NULL AUTO_INCREMENT'}},
+  {name = 'identifier', field = {name = 'identifier', type = 'VARCHAR',    length = 64,  default = 'UUID()',           extra = 'NOT NULL'}},
+  {name = 'owner',      field = {name = 'owner',      type = 'VARCHAR',    length = 64,  default = nil,                extra = 'NOT NULL'}},
+  {name = 'ownerType',  field = {name = 'owner_type', type = 'VARCHAR',    length = 64,  default = "player",           extra = 'NOT NULL'}},
+  {name = 'position',   field = {name = 'position',   type = 'VARCHAR',    length = 255, default = nil,                extra = nil}, encode = json.encode, decode = json.decode},
+  {name = 'content',    field = {name = 'content',    type = 'LONGTEXT',   length = nil, default = '[]',               extra = nil}, encode = json.encode, decode = json.decode},
+})
+
+Inventory.all = setmetatable({}, {
+  __index    = function(t, k) return rawget(t, tostring(k)) end,
+  __newindex = function(t, k, v) rawset(t, tostring(k), v) end,
+})
+
+Inventory.fromId = function(id)
+  return Inventory.all[id]
+end
+
+-- @TODO: make a queue that consume each inventory one by one
+-- to avoid burning the SQL queries (maybe a pool of 5 by 5 saves)
+Inventory.saveAll = function(cb)
+  for id, inventory in pairs(Inventory.all) do
+    inventory:save()
+  end
+end
 
 function Inventory.isItemDefined(name)
   return table.indexOf(Inventory.ItemDefs, name) ~= -1
 end
 
-function Inventory:constructor(name, owner, items)
-
-  if module.Inventories[name] ~= nil then
-    print('[warning] there is already an active instance of inventory => ' .. name .. ' returning that instance')
-    return module.Inventories[name]
-  end
-
-  self.super:ctor()
-
-  self.ready = false
-  self.name  = name
-
-  if owner then
-    self.owner  = owner
-    self.shared = true
-  else
-    self.owner  = nil
-    self.shared = false
-  end
-
-  self.items   = items or {}
-  self.ensured = false
-
-  self:on('ensure', function()
-
-    self.ensured = true
-    self.ready   = true
-
-    self:emit('ready')
-
-  end)
-
-  self:ensure()
-
-  module.Inventories[name] = self
-
-  print('new inventory => ' .. self.name)
-
-end
-
-function Inventory:ensure(cb)
-
-  MySQL.Async.fetchAll('SELECT * FROM inventories WHERE name = @name',{['@name'] = self.name}, function(rows)
-
-    if rows[1] then
-
-      local row = rows[1]
-
-      self.owner  = row.owner
-      self.shared = not not row.owner
-      self.items  = json.decode(row.items)
-
-      self:emit('ensure')
-
-      if cb then
-        cb()
-      end
-
-    else
-
-      local shared = 0
-
-      if self.shared then
-        shared = 1
-      end
-
-      MySQL.Async.execute('INSERT INTO `inventories` (name, owner, items) VALUES (@name, @owner, @items)', {
-        ['@name']  = self.name,
-        ['@owner'] = owner,
-        ['@items'] = json.encode(self.items)
-      }, function(rowsChanged)
-
-        self:emit('ensure')
-
-        if cb then
-          cb()
-        end
-
-      end)
-
-    end
-
-  end)
-
-end
-
-function Inventory:save(cb)
-
-  Citizen.CreateThread(function()
-
-    while not self.ready do
-      Citizen.Wait(0)
-    end
-
-    MySQL.Async.execute('UPDATE `inventories` SET items = @items WHERE name = @name', {
-      ['@name']  = self.name,
-      ['@items'] = json.encode(self.items)
-    }, function()
-
-      self:emit('save')
-
-      if cb then
-        cb()
-      end
-
-    end)
-
-  end)
-
-end
-
-function Inventory:get(name, full)
-
-  if name then
-
-    if not Inventory.isItemDefined(name) then
-      error('item [' .. name .. '] is not defined in config')
-    end
-
-    if self.items[name] == nil then
-      return 0
-    else
-      return self.items[name]
-    end
-
-  else
-    return self.items
-  end
-
-end
-
-function Inventory:set(name, count)
-
-  if not Inventory.isItemDefined(name) then
-    error('item [' .. name .. '] is not defined in config')
-  end
-
-  if count == 0 then
-    self.items[name] = nil
-  else
-    self.items[name] = count
-  end
-
+-- we can use this constructor to add non-persistant datas
+-- linked to the constructed inventory
+function Inventory:constructor(data)
+  self.super:ctor(data)
 end
 
 function Inventory:add(name, count)
@@ -208,5 +99,3 @@ function Inventory:remove(name, count)
   end
 
 end
-
-
