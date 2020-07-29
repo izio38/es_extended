@@ -10,15 +10,30 @@
 --   If you redistribute this software, you must link to ORIGINAL repository at https://github.com/ESX-Org/es_extended
 --   This copyright should appear in every part of the project code
 
--- @TODO: extends this to other cached server datas
-
 M('events')
+M('table')
+
+on("esx:db:ready", function()
+  -- load all items to server memory.
+  Item.find({}, function(items)
+    if items ~= nil then
+      -- @DEBUG: remove
+      print(json.encode(items))
+
+      table.map(items, function(item)
+        -- for each items, store it globally in this module
+        Item.all[item:getName()] = item
+      end)
+    end
+    
+  end)
+end)
 
 AddEventHandler('onResourceStop', function(resourceName)
   if (GetCurrentResourceName() ~= resourceName) then
     return
   end
-  
+
   Inventory.saveAll()
 end)
 

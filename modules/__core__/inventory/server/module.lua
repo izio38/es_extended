@@ -11,18 +11,27 @@
 --   This copyright should appear in every part of the project code
 
 M('persistent')
+M('events')
+M('role')
 
-module.Inventories = {}
-
-Inventory = Persist('iventory', 'id', Enrolable)
+Inventory = Persist('iventory', 'id', EventEmitter)
+Item = Persist('item', 'id', Enrolable)
 
 Inventory.define({
   {name = 'id',         field = {name = 'id',         type = 'INT',        length = nil, default = nil,                extra = 'NOT NULL AUTO_INCREMENT'}},
   {name = 'identifier', field = {name = 'identifier', type = 'VARCHAR',    length = 64,  default = 'UUID()',           extra = 'NOT NULL'}},
   {name = 'owner',      field = {name = 'owner',      type = 'VARCHAR',    length = 64,  default = nil,                extra = 'NOT NULL'}},
   {name = 'ownerType',  field = {name = 'owner_type', type = 'VARCHAR',    length = 64,  default = "player",           extra = 'NOT NULL'}},
-  {name = 'position',   field = {name = 'position',   type = 'VARCHAR',    length = 255, default = nil,                extra = nil}, encode = json.encode, decode = json.decode},
+  {name = 'position',   field = {name = 'position',   type = 'MEDIUMTEXT', length = nil, default = nil,                extra = nil}, encode = json.encode, decode = json.decode},
   {name = 'content',    field = {name = 'content',    type = 'LONGTEXT',   length = nil, default = '[]',               extra = nil}, encode = json.encode, decode = json.decode},
+})
+
+Item.define({
+  {name = 'id',         field = {name = 'id',         type = 'INT',        length = nil, default = nil,                extra = 'NOT NULL AUTO_INCREMENT'}},
+  {name = 'name',       field = {name = 'name',       type = 'VARCHAR',    length = 255, default = "",                 extra = 'NOT NULL'}},
+  {name = 'label',      field = {name = 'label',      type = 'VARCHAR',    length = 255, default = "",                 extra = 'NOT NULL'}},
+  {name = 'flags',      field = {name = 'flags',      type = 'MEDIUMTEXT', length = nil, default = '[]',               extra = nil}, encode = json.encode, decode = json.decode},
+  {name = 'metaData',   field = {name = 'meta_data',  type = 'LONGTEXT',   length = nil, default = '[]',               extra = nil}, encode = json.encode, decode = json.decode},
 })
 
 Inventory.all = setmetatable({}, {
@@ -32,6 +41,15 @@ Inventory.all = setmetatable({}, {
 
 Inventory.fromId = function(id)
   return Inventory.all[id]
+end
+
+Item.all = setmetatable({}, {
+  __index    = function(t, k) return rawget(t, tostring(k)) end,
+  __newindex = function(t, k, v) rawset(t, tostring(k), v) end,
+})
+
+Item.fromId = function(id)
+  return Item.all[id]
 end
 
 -- @TODO: make a queue that consume each inventory one by one
