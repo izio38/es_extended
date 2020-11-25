@@ -1,0 +1,53 @@
+* {
+  color: #fff;
+  font-family: sans-serif;
+}
+
+.container {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  background: #303030;
+  width: 50%;
+  height: 50%;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  background: #808080;
+}
+
+.header-item {
+  margin: 20px;
+}
+
+#player-name {
+  font-size: 18px;
+}
+
+#player-balance {
+  font-size: 18px;
+}
+
+.action-section {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.action-grid {
+  display: flex;
+  margin: 10px;
+}
+
+.action-button {
+  margin: 10px;
+  background: #808080;
+  border: none;
+  font-size: 18px;
+  padding: 10px;
+  outline: none;
+  cursor: pointer;
+}
