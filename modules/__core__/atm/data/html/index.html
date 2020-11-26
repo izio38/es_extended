@@ -20,14 +20,22 @@
       <div class="input-section">
         <div class="input-container">
           <p id="input-prefix">$</p>
-          <input id="input-amount" placeholder="Amount" />
+          <input id="input-amount" type="number" placeholder="Amount" />
         </div>
       </div>
       <div class="action-section">
+        <button class="action-button" id="action-deposit">Deposit</button>
         <div class="action-grid">
-          <button class="action-button" id="action-deposit">Deposit</button>
           <button class="action-button" id="action-withdraw">Withdraw</button>
-          <button class="action-button" id="action-transfer">Transfer</button>
+          <button class="action-button" id="action-transfer" onclick="transferMoney()">Transfer</button>
+        </div>
+      </div>
+      <div class="transfer-modal">
+        <div class="modal-con">
+          <p id="modal-amount"></p>
+          <input id="playerid" type="number" placeholder="Player ID" />
+          <button class="action-button" id="confirm-transfer" onclick="confirmTransfer()">Transfer</button>
+          <button class="action-button" id="close-transfer" onclick="cancelTransfer()">Cancel</button>
         </div>
       </div>
     </div>
