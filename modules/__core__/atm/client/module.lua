@@ -11,30 +11,37 @@
 --   This copyright should appear in every part of the project code
 
 M('events')
---M('class')
---local HUD = M('ui.hud')
-
 module.Ready = false
 module.Frame = nil
 
+
+RegisterNUICallback('esx:atm:close', function()
+  module.Frame:postMessage({
+    method = 'setVisibility',
+    data = false
+  })
+
+  SetNuiFocus(false, false)
+end)
+
 onServer('esx:atm:display', function()
   module.Frame:postMessage({
-    action = 'setATMDisplay'
+    method = 'setVisibility',
+    data = true
   })
 
   module.Frame:focus()
   SetNuiFocus(true, true)
 end)
 
+-- Callbacks for each function
 
-
-onServer('esx:atm:close', function()
-  module.Frame:postMessage({
-    action = 'closeATMDisplay' 
-  })
-
-  SetNuiFocus(false, false)
+RegisterNUICallback('esx:atm:deposit', function(data)
+  emitServer('esx:atm:depositMoney', data.amount)
 end)
 
+RegisterNUICallback('esx:atm:deposit', function(data)
+  emitServer('esx:atm:withdrawMoney', data.amount)
+end)
 
 
