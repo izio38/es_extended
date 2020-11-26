@@ -47,6 +47,7 @@ const confirmTransfer = () => {
   $.post("http://es_extended/esx:atm:transfer", JSON.stringify({
     playerId: playerId,
     amount: transferAmount
+
   }))
 }
 
@@ -55,7 +56,7 @@ const cancelTransfer = () => {
 }
 
 document.onkeyup = (data) => {
-  if (data.which == 27) {
+  if (data.which === 27) {
     // will close the atm when ESC is pressed
     $('.container').hide();
     $.post("http://es_extended/esx:atm:close", JSON.stringify({}))
