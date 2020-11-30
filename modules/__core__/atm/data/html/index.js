@@ -2,12 +2,12 @@ $('.container').hide();
 window.addEventListener('message', (event) => {
   let msg = event.data
 
-  if (msg.method == 'sendCredentials') {
+  if (msg.method === 'sendCredentials') {
     document.getElementById('player-name').innerHTML = `Welcome, ${msg.data.playerName}`
     document.getElementById('player-balance').innerHTML = `Balance: $${msg.data.balance}`
   }
 
-  if (msg.method == 'setVisibility') {
+  if (msg.method === 'setVisibility') {
     if (msg.data) {
       $('.container').show();
     } else if (!msg.data) {
@@ -15,21 +15,58 @@ window.addEventListener('message', (event) => {
     }
   }
 
+  // more checks will be done
+  if (msg.method === 'setMessage') {
+    if (msg.type === 'deposit') {
+      switch (msg.variant) {
+        case 'success': 
+          $('#action-feedback').html('Your deposit was successful')
+          $('#action-feedback').fadeOut(2000)
+          break;
+        case 'error':
+          $('#action-feedback').html('Your deposit failed. Maybe you are poor?')
+          $('#action-feedback').fadeOut(2000)
+          break;
+      }
+    } else if (msg.type === 'withdraw') {
+      switch (msg.variant) {
+        case 'success': 
+          $('#action-feedback').html('Your withdraw was successful')
+          $('#action-feedback').fadeOut(2000)
+          break;
+        case 'error':
+          $('#action-feedback').html('Your withdraw failed. Maybe you are poor?')
+          $('#action-feedback').fadeOut(2000)
+          break;
+      }
+    } else if (msg.type === 'transfer') {
+      switch (msg.variant) {
+        case 'success': 
+          $('#action-feedback').html('Your transfer was successful')
+          $('#action-feedback').fadeOut(2000)
+          break;
+        case 'error':
+          $('#action-feedback').html('Your transfer failed. Maybe you are poor?')
+          $('#action-feedback').fadeOut(2000)
+          break;
+      }
+    }
+  }
 })
 
 const depositMoney = () => {
-  console.log("I just deposited money")
-
+  const inputAmount = $('#input-amount').val();
   $.post("http://es_extended/esx:atm:deposit", JSON.stringify({
     amount: inputAmount
   }))
 }
 
 const withdrawMoney = () => {
-  console.log("I have taken money away from my balance :(")
+  const inputAmount = $('#input-amount').val();
   $.post("http://es_extended/esx:atm:withdraw", JSON.stringify({
     amount: inputAmount
   }))
+  console.log(inputAmount)
 }
 
 
@@ -47,8 +84,8 @@ const confirmTransfer = () => {
   $.post("http://es_extended/esx:atm:transfer", JSON.stringify({
     playerId: playerId,
     amount: transferAmount
-
   }))
+  $('.transfer-modal').css('visibility', 'hidden')
 }
 
 const cancelTransfer = () => {
@@ -91,3 +128,14 @@ setTimeout(() => {
   );
 }, 1000);
 
+setTimeout(() => {
+  window.dispatchEvent(
+    new MessageEvent("message", {
+      data: {
+        method: 'setMessage',
+        type: 'withdraw',
+        variant: 'error'
+      },
+    })
+  );
+}, 1000);
