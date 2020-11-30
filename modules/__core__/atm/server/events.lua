@@ -12,9 +12,13 @@
 
 
 onClient('esx:atm:depositMoney', function(amount)
-  emit('esx:account:addMoney', 'bank', amount, source)
+  module.depositMoney(amount)
 end)
 
 onClient('esx:atm:withdrawMoney', function(amount)
-  emit('esx:account:addMoney', 'cash', amount, source)
+  module.withdrawMoney(amount)
+end)
+
+onClient('esx:atm:transferMoney', function(amount, playerId)
+  module.transferMoney(amount, playerId)
 end)
