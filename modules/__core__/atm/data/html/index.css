@@ -35,6 +35,13 @@
 
 .wrapper {
   margin-top: 6em;
+  width: 100%;
+  text-align: center;
+}
+
+.fucking-quote {
+  margin-top: -3em;
+  margin-bottom: 4em;
 }
 
 .action-section {
@@ -51,7 +58,7 @@
 .action-button {
   margin: 10px;
   border: none;
-  font-size: 14px;
+  font-size: 18px;
   outline: none;
   cursor: pointer;
   background: #fff;
@@ -85,6 +92,7 @@
   border-radius: 5px;
   border: none;
   padding: 10px 20px;
+  font-size: 18px;
   text-align: center;
   color: #808080;
   font-weight: 600;
@@ -97,7 +105,7 @@
 
 #input-prefix {
   position: absolute;
-  bottom: 52.5%;
+  bottom: 45%;
   font-size: 18px;
   margin-left: 10px;
   color: #808080;
