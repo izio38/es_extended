@@ -10,36 +10,41 @@
 --   If you redistribute this software, you must link to ORIGINAL repository at https://github.com/ESX-Org/es_extended
 --   This copyright should appear in every part of the project code
 
-
-M('command')
+M("command")
+M("account")
 
 module.init = function()
-    module.registerDepositCommand()
-    module.registerATMCommand()
-    module.closeATMCommand()
+  module.openAtmCommand()
 end
 
-module.registerDepositCommand = function()
-    local depositCommand = Command('deposit', 'user', "Deposit an amout to your account")
+module.openAtmCommand = function()
+  local atmCommand = Command("atm", "user", "Open atm display")
 
-    depositCommand:setHandler(function(player)
-        emitClient('esx:atm:deposit', player.source)
-    end)
-    depositCommand:register()
+  atmCommand:setHandler(
+      function(player)
+          emitClient("esx:atm:visibility", player.source)
+      end
+  )
+  atmCommand:register()
 end
 
-module.registerATMCommand = function()
-    local ATMCommand = Command('atm', 'user', "Open atm")
-    ATMCommand:setHandler(function(player)
-        emitClient('esx:atm:display', player.source)
-    end)
-    ATMCommand:register()
+--FIXE: when accounts is done, get the account amount of the source
+-- and trigger a client event with the feedback message to NUI
+
+module.depositMoney = function(amount)
+  -- Account.RemoveIdentityMoney("money", amount, player)
+  -- Account.AddIdentityMoney("bank", amount, player)
+  print('deposit', amount, source)
 end
 
-module.closeATMCommand = function()
-    local ATMCloseCommand = Command('atm:close', 'user', 'Close the ATM')
-    ATMCloseCommand:setHandler(function(player)
-        emitClient('esx:atm:close', player.source)
-    end)
-    ATMCloseCommand:register()
+module.withdrawMoney = function(amount)
+  -- Account.RemoveIdentityMoney("money", amount, player)
+  -- Account.AddIdentityMoney("bank", amount, player)
+  print('withdraw', amount, source)
+end
+
+module.transferMoney = function(amount, playerId)
+  --Account.RemoveIdentityMoney('bank', amount, source)
+  --Account.AddIdentityMoney('bank', amount, playerId)
+  print('transfer', amount, playerId)
 end
