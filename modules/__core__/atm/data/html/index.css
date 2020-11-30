@@ -103,15 +103,6 @@
   font-weight: 600;
 }
 
-#input-prefix {
-  position: absolute;
-  bottom: 45%;
-  font-size: 18px;
-  margin-left: 10px;
-  color: #808080;
-  font-weight: 600;
-}
-
 .transfer-modal {
   background: #1b1b1b;
   position: absolute;
@@ -135,4 +126,9 @@
 #close-transfer {
   background: #c62828;
   color: #fff;
+}
+
+
+#action-feedback {
+  margin-top: -20px;
 }
