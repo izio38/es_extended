@@ -66,6 +66,7 @@ module.UpdateStatus = function()
         module.StatusLow       = false
         module.StatusDying     = false
         module.StatusDrunk     = 0
+        module.DrugName        = "weed"
         module.StatusDrugs     = 0
         module.StatusStress    = 0
 
@@ -93,7 +94,16 @@ module.UpdateStatus = function()
                         module.Cache.Statuses[identifier][id][v]["value"] = module.Cache.Statuses[identifier][id][v]["value"] - 1
                         if module.Cache.Statuses[identifier][id][v]["id"] == "drunk" then
                             module.StatusDrunk = module.Cache.Statuses[identifier][id][v]["value"]
-                        elseif module.Cache.Statuses[identifier][id][v]["id"] == "drugs" then
+                        elseif module.Cache.Statuses[identifier][id][v]["id"] == "weed" then
+                            module.StatusDrugs = module.Cache.Statuses[identifier][id][v]["value"]
+                        elseif module.Cache.Statuses[identifier][id][v]["id"] == "cocaine" then
+                            module.DrugName    = "cocaine"
+                            module.StatusDrugs = module.Cache.Statuses[identifier][id][v]["value"]
+                        elseif module.Cache.Statuses[identifier][id][v]["id"] == "meth" then
+                            module.DrugName    = "meth"
+                            module.StatusDrugs = module.Cache.Statuses[identifier][id][v]["value"]
+                        elseif module.Cache.Statuses[identifier][id][v]["id"] == "heroin" then
+                            module.DrugName    = "heroin"
                             module.StatusDrugs = module.Cache.Statuses[identifier][id][v]["value"]
                         elseif module.Cache.Statuses[identifier][id][v]["id"] == "stress" then
                             module.StatusStress = module.Cache.Statuses[identifier][id][v]["value"]
@@ -105,7 +115,7 @@ module.UpdateStatus = function()
 
             Cache.UpdateStatus(player.identifier, player:getIdentityId(), Config.Modules.Status.StatusIndex, module.Cache.Statuses[identifier][id])
             emitClient('esx:status:updateStatus', player.source, module.Cache.Statuses[identifier][id])
-            emitClient('esx:status:statCheck', player.source, module.StatusLow, module.StatusDying, module.StatusDrunk, module.StatusDrugs, module.StatusStress)
+            emitClient('esx:status:statCheck', player.source, module.StatusLow, module.StatusDying, module.StatusDrunk, module.DrugName, module.StatusDrugs, module.StatusStress)
         end
     end
 end
@@ -119,6 +129,7 @@ module.SetStatus = function(statusName, value)
     module.StatusLow       = false
     module.SendStatus      = nil
     module.StatusDrunk     = 0
+    module.DrugName        = "weed"
     module.StatusDrugs     = 0
     module.StatusStress    = 0
 
@@ -129,27 +140,36 @@ module.SetStatus = function(statusName, value)
             end
 
             if module.Cache.Statuses[identifier][id][v]["fadeType"] == "desc" then
+                table.insert(status, {k = module.Cache.Statuses[identifier][id][v]["value"]})
+
                 if module.Cache.Statuses[identifier][id][v]["value"] > 0 and module.Cache.Statuses[identifier][id][v]["value"] <= 10 then
                     module.StatusLow = true
                 elseif module.Cache.Statuses[identifier][id][v]["value"] == 0 then
                     module.StatusDying = true
                 end
-
-                table.insert(status, {k = module.Cache.Statuses[identifier][id][v]["value"]})
             elseif module.Cache.Statuses[identifier][id][v]["fadeType"] == "asc" then
+                table.insert(status, {k = module.Cache.Statuses[identifier][id][v]["value"]})
                 if module.Cache.Statuses[identifier][id][v]["id"] == "drunk" then
                     module.StatusDrunk = module.Cache.Statuses[identifier][id][v]["value"]
-                elseif module.Cache.Statuses[identifier][id][v]["id"] == "drugs" then
+                elseif module.Cache.Statuses[identifier][id][v]["id"] == "weed" then
+                    module.StatusDrugs = module.Cache.Statuses[identifier][id][v]["value"]
+                elseif module.Cache.Statuses[identifier][id][v]["id"] == "cocaine" then
+                    module.DrugName    = "cocaine"
+                    module.StatusDrugs = module.Cache.Statuses[identifier][id][v]["value"]
+                elseif module.Cache.Statuses[identifier][id][v]["id"] == "meth" then
+                    module.DrugName    = "meth"
+                    module.StatusDrugs = module.Cache.Statuses[identifier][id][v]["value"]
+                elseif module.Cache.Statuses[identifier][id][v]["id"] == "heroin" then
+                    module.DrugName    = "heroin"
                     module.StatusDrugs = module.Cache.Statuses[identifier][id][v]["value"]
                 elseif module.Cache.Statuses[identifier][id][v]["id"] == "stress" then
                     module.StatusStress = module.Cache.Statuses[identifier][id][v]["value"]
                 end
-                table.insert(status, {k = module.Cache.Statuses[identifier][id][v]["value"]})
             end
         end
 
         Cache.UpdateStatus(player.identifier, player:getIdentityId(), Config.Modules.Status.StatusIndex, module.Cache.Statuses[identifier][id])
         emitClient('esx:status:updateStatus', player.source, module.Cache.Statuses[identifier][id])
-        emitClient('esx:status:statCheck', player.source, module.StatusLow, module.StatusDying, module.StatusDrunk, module.StatusDrugs, module.StatusStress)
+        emitClient('esx:status:statCheck', player.source, module.StatusLow, module.StatusDying, module.StatusDrunk, module.DrugName, module.StatusDrugs, module.StatusStress)
     end
 end

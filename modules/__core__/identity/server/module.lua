@@ -14,7 +14,7 @@ M('table')
 M('persistent')
 
 local spawn = {x = -269.4, y = -955.3, z = 31.2, heading = 205.8}
-local status   = {hunger = 100, thirst = 100, drugs  = 0, drunk  = 0, stress = 0}
+local status   = {hunger = 100, thirst = 100, weed = 0, cocaine = 0, heroin = 0, meth = 0, drunk  = 0, stress = 0}
 local accounts = {wallet = 0, fleeca = 0, maze = 0}
 
 Identity = Persist('identities', 'id', Enrolable)

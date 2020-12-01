@@ -45,9 +45,16 @@ module.math = module.math or {}
 module.time = module.time or {}
 
 -- Vars
-module.isFadeInActive = false
-module.isFadedOut     = true
-module.fadeStrength   = 0
+module.IsFadedOut           = true
+module.ExtraIsFadedOut      = true
+module.FadeInActive         = false
+module.ExtraFadeInActive    = false
+module.CurrentModifier      = nil
+module.CurrentExtraModifier = nil
+module.FadeStrength         = 0
+module.ExtraFadeStrength    = 0
+module.LoopReady            = false
+module.CurrentModifier      = nil
 
 -- Locals
 local entityEnumerator = {
@@ -723,19 +730,26 @@ module.game.DoAnimation = function(dict,animationName,animationLength,flag)
   StopAnimTask(PlayerPedId(), dict, animationName, 1.0)
 end
 
-module.game.FadeInModifier = function(modifier, speed)
-  module.isFadeInActive = true
+module.game.FadeInModifier = function(modifier, speed, amount, max)
+  if module.CurrentModifier ~= modifier then
+    module.FadeStrength = 0
+    ClearTimecycleModifier()
+    ClearExtraTimecycleModifier()
+    SetTimecycleModifier(modifier)
+    SetTimecycleModifierStrength(0)
+  end
+
+  module.FadeInActive = true
+  module.CurrentModifier = modifier
+
   Citizen.CreateThread(function()
     while true do
-      while not module.isFadedOut do
-        Wait(10)
-      end
-
-      if tonumber(module.fadeStrength) < 1.0 and module.isFadeInActive then
-        module.fadeStrength = module.fadeStrength + 0.001
-        SetTimecycleModifierStrength(module.fadeStrength)
+      if tonumber(module.FadeStrength) < max and module.FadeInActive then
+        module.FadeStrength = module.FadeStrength + amount
+        SetTimecycleModifierStrength(module.FadeStrength)
         Wait(speed)
       else
+        module.ModifierActive = true
         break
       end
     end
@@ -743,19 +757,20 @@ module.game.FadeInModifier = function(modifier, speed)
 end
 
 -- Lighter Resource Usage
-module.game.FadeOutModifier = function(speed)
-  module.isFadeInActive = false
-  module.isFadedOut     = false
+module.game.FadeOutModifier = function(speed, amount)
+  module.FadeInActive = false
+  module.IsFadedOut   = false
 
   Citizen.CreateThread(function()
     while true do
-      if tonumber(module.fadeStrength) > 0 and not module.isFadedOut then
-        module.fadeStrength = module.fadeStrength - 0.001
-        SetTimecycleModifierStrength(module.fadeStrength)
+      if tonumber(module.FadeStrength) > 0 then
+        module.FadeStrength = module.FadeStrength - amount
+        SetTimecycleModifierStrength(module.FadeStrength)
         Wait(speed)
       else
-        module.isFadedOut = true
-        module.modifierActive = false
+        module.IsFadedOut      = true
+        module.ModifierActive  = false
+        module.CurrentModifier = nil
         ClearTimecycleModifier()
         break
       end
@@ -765,45 +780,52 @@ end
 
 -- Lighter Resource Usage
 module.game.LoopModifier = function(modifier, speed, amount, min, max)
-  ClearTimecycleModifier()
-
-  Wait(10)
+  if module.ModifierActive and not module.ExtraModifierActive then
+    ClearTimecycleModifier()
+    module.ModifierActive       = false
+  elseif module.ModifierActive and module.ExtraModifierActive then
+    ClearTimecycleModifier()
+    ClearExtraTimecycleModifier()
+    module.ModifierActive       = false
+    module.ExtraModifierActive  = false
+  end
 
   SetTimecycleModifier(modifier)
-  SetTimecycleModifierStrength(min)
 
-  module.fadeStrength = min
-  module.increasing   = true
-
-  module.breakModifier = false
+  module.FadeStrength      = 0
+  module.Increasing        = true
+  module.BreakLoopModifier = false
 
   Citizen.CreateThread(function()
-    while true do
-      
-      if module.breakModifier then
-        module.breakModifier = false
+    while true do     
+      if module.BreakLoopModifier then
+        ClearTimecycleModifier()
+        module.ModifierActive = false
         break
       end
 
-      if not module.modifierActive then
-        module.modifierActive = true
+      if not module.ModifierActive then
+        module.IsFadedOut      = false
+        module.ModifierActive  = true
       end
 
-      if module.increasing then
-        if tonumber(module.fadeStrength) < max then
-          module.fadeStrength = module.fadeStrength + amount
-          SetTimecycleModifierStrength(module.fadeStrength)
+      if module.Increasing then
+        module.FadeStrength = module.FadeStrength + amount
+
+        if tonumber(module.FadeStrength) <= max then
+          SetTimecycleModifierStrength(module.FadeStrength)
         else
-          module.increasing = false
+          module.Increasing = false
         end
 
         Wait(speed)
-      elseif not module.increasing then
-        if module.fadeStrength > min then
-          module.fadeStrength = module.fadeStrength - amount
-          SetTimecycleModifierStrength(module.fadeStrength)
+      elseif not module.Increasing then
+        module.FadeStrength = module.FadeStrength - amount
+
+        if module.FadeStrength >= min then
+          SetTimecycleModifierStrength(module.FadeStrength)
         else
-          module.increasing = true
+          module.Increasing = true
         end
 
         Wait(speed)
@@ -816,51 +838,67 @@ end
 
 -- Heavier Resource Usage
 module.game.SwingingLoopModifier = function(modifier, modifier2, speed, amount, min, max)
-  ClearTimecycleModifier()
-  ClearExtraTimecycleModifier()
-
-  Wait(10)
+  if module.ModifierActive and not module.ExtraModifierActive then
+    ClearTimecycleModifier()
+    module.ModifierActive       = false
+  elseif module.ModifierActive and module.ExtraModifierActive then
+    ClearTimecycleModifier()
+    ClearExtraTimecycleModifier()
+    module.ModifierActive       = false
+    module.ExtraModifierActive  = false
+  end
 
   SetTimecycleModifier(modifier)
   SetTimecycleModifierStrength(max)
   SetExtraTimecycleModifier(modifier2)
   SetExtraTimecycleModifierStrength(min)
 
-  module.fadeStrength  = max
-  module.fadeStrength2 = min
-  module.increasing    = true
-
-  module.breakSwingingModifier = false
+  module.FadeStrength              = max
+  module.ExtraFadeStrength         = min
+  module.Increasing                = true
+  module.BreakSwingingLoopModifier = false
+  module.LoopReady                 = false
 
   Citizen.CreateThread(function()
     while true do 
-      if module.breakSwingingModifier then
+      if module.BreakSwingingLoopModifier then
+        ClearTimecycleModifier()
+        ClearExtraTimecycleModifier()
+        module.ModifierActive       = false
+        module.ExtraModifierActive  = false
         break
       end
 
-      if not module.modifierActive then
-        module.modifierActive = true
+      if not module.ModifierActive or not module.ExtraModifierActive then
+        module.IsFadedOut           = false
+        module.ExtraIsFadedOut      = false
+        module.ModifierActive       = true
+        module.ExtraModifierActive  = true
       end
 
-      if module.increasing then
-        if tonumber(module.fadeStrength) < max then
-          module.fadeStrength  = module.fadeStrength + amount
-          module.fadeStrength2 = module.fadeStrength2 - amount
-          SetTimecycleModifierStrength(module.fadeStrength)
-          SetExtraTimecycleModifierStrength(module.fadeStrength2)
+      if module.Increasing then
+        if tonumber(module.FadeStrength) < max then
+          module.FadeStrength = module.FadeStrength + amount
+          SetTimecycleModifierStrength(module.FadeStrength)
+
+          if module.ExtraFadeStrength > min then
+            module.ExtraFadeStrength = module.ExtraFadeStrength - amount
+            SetExtraTimecycleModifierStrength(module.ExtraFadeStrength)
+          end
         else
-          module.increasing = false
+          module.Increasing = false
         end
 
         Wait(speed)
-      elseif not module.increasing then
-        if module.fadeStrength > min then
-          module.fadeStrength = module.fadeStrength - amount
-          module.fadeStrength2 = module.fadeStrength2 + amount
-          SetTimecycleModifierStrength(module.fadeStrength)
-          SetExtraTimecycleModifierStrength(module.fadeStrength2)
+      elseif not module.Increasing then
+        if module.FadeStrength > min then
+          module.FadeStrength = module.FadeStrength - amount
+          SetTimecycleModifierStrength(module.FadeStrength)
+
+          module.ExtraFadeStrength = module.ExtraFadeStrength + amount
+          SetExtraTimecycleModifierStrength(module.ExtraFadeStrength)
         else
-          module.increasing = true
+          module.Increasing = true
         end
 
         Wait(speed)
@@ -872,39 +910,23 @@ module.game.SwingingLoopModifier = function(modifier, modifier2, speed, amount, 
 end
 
 module.game.BreakLoopModifier = function()
-  if module.modifierActive then
-    module.breakModifier = true
+  if module.ModifierActive then
+    module.BreakLoopModifier = true
   end
 end
 
 module.game.BreakSwingingLoopModifier = function()
-  if module.modifierActive then
-    module.breakSwingingModifier = true
+  if module.ExtraModifierActive then
+    module.BreakSwingingLoopModifier = true
   end
 end
 
-module.game.DoubleFadeOutModifier = function()
-  module.isFadedOut     = false
-
-  Citizen.CreateThread(function()
-    while true do
-      if tonumber(module.fadeStrength) > 0 and not module.isFadedOut then
-        module.fadeStrength = module.fadeStrength - 0.001
-        SetTimecycleModifierStrength(module.fadeStrength)
-        SetExtraTimecycleModifierStrength(module.fadeStrength)
-        Wait(1)
-      else
-        module.isFadedOut = true
-        module.modifierActive = false
-        ClearTimecycleModifier()
-        break
-      end
-    end
-  end)
+module.game.IsModifierFadedOut = function()
+  return module.IsFadedOut
 end
 
-module.game.IsFadedOut = function()
-  return module.isFadedOut
+module.game.IsExtraModifierFadedOut = function()
+  return module.ExtraIsFadedOut
 end
 
 -- UI
