@@ -731,6 +731,12 @@ module.game.DoAnimation = function(dict,animationName,animationLength,flag)
 end
 
 module.game.FadeInModifier = function(modifier, speed, amount, max)
+  if module.FadeInActive then
+    print("Was not ready, pausing")
+    module.FadeInActive = false
+    Wait(1000)
+  end
+
   if module.CurrentModifier ~= modifier then
     module.FadeStrength = 0
     ClearTimecycleModifier()
@@ -742,14 +748,37 @@ module.game.FadeInModifier = function(modifier, speed, amount, max)
   module.FadeInActive = true
   module.CurrentModifier = modifier
 
+  if module.FadeStrength > max then
+    print("reducing")
+    module.game.ReduceModifier(modifier, speed, amount, max)
+  else
+    print("increasing")
+    Citizen.CreateThread(function()
+      while true do
+        if tonumber(module.FadeStrength) < max and module.FadeInActive then
+          module.FadeStrength = module.FadeStrength + amount
+          SetTimecycleModifierStrength(module.FadeStrength)
+          Wait(speed)
+        else
+          if not module.ModifierActive then
+            module.ModifierActive = true
+          end
+
+          break
+        end
+      end
+    end)
+  end
+end
+
+module.game.ReduceModifier = function(modifier, speed, amount, max)
   Citizen.CreateThread(function()
     while true do
-      if tonumber(module.FadeStrength) < max and module.FadeInActive then
-        module.FadeStrength = module.FadeStrength + amount
+      if tonumber(module.FadeStrength) > max then
+        module.FadeStrength = module.FadeStrength - amount
         SetTimecycleModifierStrength(module.FadeStrength)
         Wait(speed)
       else
-        module.ModifierActive = true
         break
       end
     end
@@ -907,6 +936,16 @@ module.game.SwingingLoopModifier = function(modifier, modifier2, speed, amount, 
       end
     end
   end)
+end
+
+module.game.ClearModifiers = function()
+  module.ModifierActive  = false
+  module.FadeInActive    = false
+  module.CurrentModifier = nil
+  ClearTimecycleModifier()
+  ClearExtraTimecycleModifier()
+  SetTimecycleModifierStrength(0)
+  SetExtraTimecycleModifierStrength(0)
 end
 
 module.game.BreakLoopModifier = function()

@@ -18,9 +18,10 @@ M("table")
 -- /config/default/config.character.lua, is it the right place ?
 local characterConfig = Config.Modules.character
 
-module.registrationMenu = nil
+module.registrationMenu       = nil
 module.characterSelectionMenu = nil
-module.isInMenu = false
+module.isInMenu               = false
+module.CharacterSelected      = false
 
 module.AreMenuInUse = function()
   return not(module.characterSelectionMenu.isDestroyed and module.characterSelectionMenu.isDestroyed)
@@ -61,7 +62,6 @@ module.OpenMenu = function(cb)
       local props = module.registrationMenu:kvp()
 
       if (props.firstName ~= '') and (props.lastName ~= '') and (props.dob ~= '') then
-
         module.registrationMenu:destroy()
 
         request('esx:character:creation', cb, props)
@@ -84,7 +84,7 @@ end
 -- Temporary solution to preventing movement on resource restart
 -- @TODO: Find a more permanent solution
 module.InitiateCharacterSelectionSpawn = function()
-  FreezeEntityPosition(PlayerPedId(), true)
+  -- FreezeEntityPosition(PlayerPedId(), true)
 
   local spawnCoords = characterConfig.spawnCoords
 
@@ -100,7 +100,7 @@ module.InitiateCharacterSelectionSpawn = function()
   }, function()
 
     local playerPed = PlayerPedId()
-    FreezeEntityPosition(PlayerPedId(), true)
+    -- FreezeEntityPosition(PlayerPedId(), true)
 
   end)
 
@@ -165,6 +165,7 @@ module.RequestIdentitySelection = function(identities)
       camera.setMouseIn(false)
     else
       request("esx:character:fetchSkin", function(skinContent)
+        module.CharacterSelected = true
         if skinContent then
             module.SelectCharacter(item.name, item.label, item.identity, skinContent)
         else
@@ -231,8 +232,105 @@ module.SelectCharacter = function(name, label, identity, skinContent)
 end
 
 module.LoadPreviewSkin = function(skinContent)
-  if skinContent["model"] == "mp_m_freemode_01" then
+  NetworkSetEntityInvisibleToNetwork(PlayerPedId(), false)
 
+  if skinContent["model"] == "mp_m_freemode_01" then
+    local modelHash = GetHashKey(skinContent["model"])
+
+    utils.game.requestModel(modelHash, function()
+      SetPlayerModel(PlayerId(), modelHash)
+
+      local ped                      = PlayerPedId()
+      local blend                    = skinContent["blend"]
+      local blendFaceMix             = skinContent["blendFaceMix"]
+      local blendSkinMix             = skinContent["blendSkinMix"]
+      local blendOverrideMix         = skinContent["blendOverrideMix"]
+      local blemishes                = skinContent["blemishes"]
+      local blemishesOpacity         = skinContent["blemishesOpacity"]
+      local eyebrow                  = skinContent["eyebrow"]
+      local opacity                  = skinContent["eyebrowOpacity"]
+      local eyebrowColor1            = skinContent["eyebrowColor1"]
+      local eyebrowColor2            = skinContent["eyebrowColor2"]
+      local blush                    = skinContent["blush"]
+      local blushOpacity             = skinContent["blushOpacity"]
+      local blushColor1              = skinContent["blushColor1"]
+      local blushColor2              = skinContent["blushColor2"]
+      local complexion               = skinContent["complexion"]
+      local complexionOpacity        = skinContent["complexionOpacity"]
+      local freckles                 = skinContent["freckles"]
+      local frecklesOpacity          = skinContent["frecklesOpacity"]
+      local beard                    = skinContent["beard"]
+      local beardOpacity             = skinContent["beardOpacity"]
+      local beardColor1              = skinContent["beardColor1"]
+      local beardColor2              = skinContent["beardColor2"]
+      local makeup                   = skinContent["makeup"]
+      local makeupOpacity            = skinContent["makeupOpacity"]
+      local lipstick                 = skinContent["lipstick"]
+      local lipstickOpacity          = skinContent["lipstickOpacity"]
+      local lipstickColor            = skinContent["lipstickColor"]
+      local aging                    = skinContent["aging"]
+      local agingOpacity             = skinContent["agingOpacity"]
+      local chestHair                = skinContent["chestHair"]
+      local chestHairOpacity         = skinContent["chestHairOpacity"]
+      local chestHairColor           = skinContent["chestHairColor"]
+      local sunDamage                = skinContent["sunDamage"]
+      local sunDamageOpacity         = skinContent["sunDamageOpacity"]
+      local bodyBlemishes            = skinContent["bodyBlemishes"]
+      local bodyBlemishesOpacity     = skinContent["bodyBlemishesOpacity"]
+      local moreBodyBlemishes        = skinContent["moreBodyBlemishes"]
+      local moreBodyBlemishesOpacity = skinContent["moreBodyBlemishesOpacity"]
+      local hair                     = skinContent["hair"]
+      local hairColor                = skinContent["hairColor"]
+
+      SetPedHeadBlendData(ped, blend[1], blend[2], blend[3], blend[4], blend[5], blend[6], blendFaceMix, blendSkinMix, blendOverrideMix, true)
+
+      while HasPedHeadBlendFinished(ped) do
+        Citizen.Wait(0)
+      end
+
+      SetPedHeadOverlay(ped, 0, blemishes, blemishesOpacity)
+
+      SetPedHeadOverlay(ped, 2, eyebrow, opacity)
+      SetPedHeadOverlayColor(ped, 2, 1, eyebrowColor1, eyebrowColor2)
+
+      SetPedHeadOverlay(ped, 1, beard, beardOpacity)
+      SetPedHeadOverlayColor(ped, 1, 1, beardColor1, beardColor2)
+
+      SetPedHeadOverlay(ped, 5, blush, blushOpacity)
+      SetPedHeadOverlayColor(ped, 5, 2, blushColor1, blushColor2)
+
+      SetPedHeadOverlay(ped, 6, complexion, complexionOpacity)
+
+      SetPedHeadOverlay(ped, 9, freckles, frecklesOpacity)
+
+      SetPedHeadOverlay(ped, 4, makeup, makeupOpacity)
+
+      SetPedHeadOverlay(ped, 8, lipstick, lipstickOpacity)
+      SetPedHeadOverlayColor(ped, 8, 2, lipstickColor, lipstickColor)
+
+      SetPedHeadOverlay(ped, 10, chestHair, chestHairOpacity)
+      SetPedHeadOverlayColor(ped, 10, 1, chestHairColor, chestHairColor)
+
+      SetPedHeadOverlay(ped, 7, sunDamage, sunDamageOpacity)
+      SetPedHeadOverlay(ped, 11, bodyBlemishes, bodyBlemishesOpacity)
+      SetPedHeadOverlay(ped, 12, moreBodyBlemishes, moreBodyBlemishesOpacity)
+
+      for componentId,component in pairs(skinContent["components"]) do
+        SetPedComponentVariation(ped, componentId, component[1], component[2], 1)
+      end
+
+      SetPedComponentVariation(ped, 2, hair[1], hair[2], 1)
+      SetPedHairColor(ped, hairColor[1], hairColor[2])
+
+      camera.setRadius(1.25)
+  
+      camera.pointToBone(SKEL_Head, vector3(0.0,0.0,0.0))
+
+      SetModelAsNoLongerNeeded(modelHash)
+    end)
+
+    SetEntityVisible(PlayerPedId(), true)
+  elseif skinContent["model"] == "mp_f_freemode_01" then
     local modelHash = GetHashKey(skinContent["model"])
 
     utils.game.requestModel(modelHash, function()
@@ -356,5 +454,5 @@ end
 module.SelectIdentity = function(identity)
   emit("esx:identity:selectIdentity", Identity(identity))
   camera.setMouseIn(false)
-  FreezeEntityPosition(PlayerPedId(), false)
+  -- FreezeEntityPosition(PlayerPedId(), false)
 end

@@ -14,7 +14,7 @@ local utils = M('utils')
 
 module.DyingActive, module.LowActive, module.StressActive, module.DrunkActive = false, false, false, false
 module.WeedActive, module.CocaineActive, module.MethActive, module.HeroinActive = false, false, false, false
-module.Ready, module.Frame, module.isPaused, module.Sick, module.CurrentAnimSet, module.StatusEffectActive = false, nil, false, false, nil, false
+module.Ready, module.Frame, module.isPaused, module.Sick, module.CurrentAnimSet, module.StatusEffectActive, module.CurrentStrength = false, nil, false, false, nil, false, 0
 
 module.UpdateStatus = function(statuses)
   if statuses then
@@ -68,6 +68,7 @@ module.StatCheck = function(low, dying, drunk, drugName, drugs, stress)
         module.StatusEffectActive = true
         module.Stress(stress)
       elseif (drunk > 0 and drunk == drugs) or (drunk > 0 and drunk > drugs and drunk > stress) then
+        print("drunk")
         module.Drunk(drunk)
       elseif drugs > 0 and drugs > stress and drugs > drunk then
         module.StatusEffectActive = true
@@ -168,12 +169,13 @@ end
 
 module.Drunk = function(drunk)
   module.StatusEffectActive = true
-  local veh      = nil
   local modifier = nil
   local clipset  = nil
   local speed    = nil
   local amount   = nil
   local max      = nil
+
+  print("made it here 1")
 
   if not module.DrunkActive then
     SetPedConfigFlag(PlayerPedId(), 100, true)
@@ -181,11 +183,13 @@ module.Drunk = function(drunk)
     module.DrunkActive = true
   end
 
+  print("made it here 2")
 
   if drunk <= 9 then
     if module.CurrentModifier then
-      utils.game.FadeOutModifier(100, 0.05)
+      utils.game.FadeOutModifier(100, 0.0025)
       module.CurrentModifier = nil
+      module.CurrentStrength = 0
     end
 
     SetPedConfigFlag(PlayerPedId(), 100, false)
@@ -197,70 +201,60 @@ module.Drunk = function(drunk)
     end
     ResetPedMovementClipset(PlayerPedId())
   elseif drunk >= 10 and drunk <= 24 then
-    modifier = "MP_corona_heist_DOF"
+    modifier = "Drunk"
     clipset  = "MOVE_M@BUZZED"
-    speed    = 100
-    amount   = 0.02
-    max      = 0.5
+    speed    = 50
+    amount   = 0.0025
+    max      = 0.2
     fall     = 0
     sick     = 0
   elseif drunk >= 25 and drunk <= 49 then
-    modifier = "MP_corona_heist_DOF"
+    modifier = "Drunk"
     clipset  = "MOVE_M@DRUNK@SLIGHTLYDRUNK"
-    speed    = 100
-    amount   = 0.02
-    max      = 0.75
+    speed    = 50
+    amount   = 0.0025
+    max      = 0.3
     fall     = 0
     sick     = 0
   elseif drunk >= 50 and drunk <= 75 then
-    modifier = "MP_corona_heist_DOF"
+    modifier = "Drunk"
     clipset  = "MOVE_M@DRUNK@A"
-    speed    = 100
-    amount   = 0.02
-    max      = 1.0
+    speed    = 50
+    amount   = 0.0025
+    max      = 0.5
     fall     = math.random(10,100)
     sick     = math.random(10,100)
   elseif drunk >= 76 and drunk <= 89 then
-    modifier = "BlackOut"
+    modifier = "Drunk"
     clipset  = "MOVE_M@DRUNK@VERYDRUNK"
-    speed    = 100
-    amount   = 0.02
+    speed    = 50
+    amount   = 0.0025
     max      = 0.75
     fall     = math.random(20,100)
     sick     = math.random(20,100)
   elseif drunk >= 90 and drunk <= 100 then
-    modifier = "BlackOut"
+    modifier = "Drunk"
     clipset  = "MOVE_M@DRUNK@VERYDRUNK"
-    speed    = 100
-    amount   = 0.02
+    speed    = 50
+    amount   = 0.0025
     max      = 1.0
     fall     = math.random(25,100)
     sick     = math.random(35,100)
   end
 
-  if drunk > 25 and sick > 55 then
-    if IsPedInVehicle(PlayerPedId(), GetVehiclePedIsIn(PlayerPedId()), false) then
-      veh = GetVehiclePedIsIn(PlayerPedId())
+  print("made it here 3")
 
-      if GetPedInVehicleSeat(veh, -1) == PlayerPedId() then
-        drunkDriving = true
-      end
-    else
-      if fall > 0 or sick > 0 then
-        module.DrunkEffects(fall, sick)
-      end
-    end
-  else
-    drunkDriving = false
+  if max then
+    print(max .. " | " .. module.CurrentStrength)
   end
 
-  if drunkDriving then
-    module.DrunkDriving(veh)
-  end
-
-  if modifier then
+  if modifier and module.CurrentStrength ~= max then
+    module.CurrentStrength = max
+    print("Triggering. Was it finished?")
     module.IsDrunk(modifier, speed, amount, max)
   end
+
+  print("made it here 4")
 
   if clipset then
     if module.CurrentAnimSet ~= clipset then
@@ -275,6 +269,24 @@ module.Drunk = function(drunk)
     
     SetPedMovementClipset(PlayerPedId(), module.CurrentAnimSet, true)
   end
+
+  print("made it here 5")
+
+  if drunk > 25 and sick > 55 then
+    if IsPedInAnyVehicle(PlayerPedId(), false) then
+      local veh = GetVehiclePedIsIn(PlayerPedId())
+
+      if GetPedInVehicleSeat(veh, -1) == PlayerPedId() then
+        module.DrunkDriving(veh)
+      end
+    else
+      if fall > 0 or sick > 0 then
+        module.DrunkEffects(fall, sick)
+      end
+    end
+  end
+
+  print("made it here 6")
 end
 
 module.Weed = function(value)
@@ -367,9 +379,7 @@ module.Init = function()
   module.MethActive     = false
   module.HeroinActive   = false
   module.DrunkActive    = false
-
-  ClearTimecycleModifier()
-  ClearExtraTimecycleModifier()
+  utils.game.ClearModifiers()
   ResetPedMovementClipset(PlayerPedId())
 end
 

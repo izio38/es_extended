@@ -192,6 +192,7 @@ module.RequestRegistration = function(cb)
         module.Menu:destroy()
         module.Menu = nil
 
+        emit('esx:character:breakLoop')
         emit('esx:character:destroyCharacterSelect')
 
         request('esx:identity:register', cb, props)

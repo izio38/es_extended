@@ -13,9 +13,9 @@
 local utils = M('utils')
 local camera = M("camera")
 
-module.Config     = run('data/config.lua', {vector3 = vector3})['Config']
-module.Editor     = Extends(EventEmitter, 'SkinEditor')
-module.Skin       = Extends(EventEmitter, 'Skin')
+module.Config = run('data/config.lua', {vector3 = vector3})['Config']
+module.Editor = Extends(EventEmitter, 'SkinEditor')
+module.Skin   = Extends(EventEmitter, 'Skin')
 
 on('ui.menu.mouseChange', function(value)
 	if module.openedMenu then
@@ -1263,7 +1263,6 @@ function Skin:applyAll(cb)
     local hairColor                = self:getHairColor()
 
     if (utils.game.isFreemodeModel(self:getModel())) then
-
       SetPedHeadBlendData(ped, blend[1], blend[2], blend[3], blend[4], blend[5], blend[6], blendFaceMix, blendSkinMix, blendOverrideMix, true)
 
       while HasPedHeadBlendFinished(ped) do
@@ -3608,6 +3607,7 @@ function SkinEditor:saveFromMenu()
 
   self:returnPlayer()
   emit('esx:skin:loaded')
+  EnableAllControlActions(0)
 end
 
 function SkinEditor:save()
@@ -3646,6 +3646,7 @@ module.init = function()
     else
       module.loadPlayerSkin(skinContent)
       emit('esx:skin:loaded')
+      EnableAllControlActions(0)
     end
   end)
 end
