@@ -55,6 +55,8 @@ module.FadeStrength         = 0
 module.ExtraFadeStrength    = 0
 module.LoopReady            = false
 module.CurrentModifier      = nil
+module.CharacterLoaded      = false
+module.PlayersToHide        = {}
 
 -- Locals
 local entityEnumerator = {

@@ -10,3 +10,14 @@
 --   If you redistribute this software, you must link to ORIGINAL repository at https://github.com/ESX-Org/es_extended
 --   This copyright should appear in every part of the project code
 
+onServer('utils:AddPlayerToHideList', function(player)
+  module.PlayersToHide[player] = true
+end)
+
+onServer('utils:RemovePlayerFromHideLIst', function(player)
+  module.PlayersToHide[player] = false
+end)
+
+on('utils:CharacterLoaded', function()
+  module.CharacterLoaded = true
+end)

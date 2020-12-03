@@ -84,25 +84,17 @@ end
 -- Temporary solution to preventing movement on resource restart
 -- @TODO: Find a more permanent solution
 module.InitiateCharacterSelectionSpawn = function()
-  -- FreezeEntityPosition(PlayerPedId(), true)
 
   local spawnCoords = characterConfig.spawnCoords
 
   module.DoSpawn({
-
     x        = spawnCoords.x,
     y        = spawnCoords.y,
     z        = spawnCoords.z,
     heading  = spawnCoords.heading,
     model    = 'mp_m_freemode_01',
     skipFade = false
-
-  }, function()
-
-    local playerPed = PlayerPedId()
-    -- FreezeEntityPosition(PlayerPedId(), true)
-
-  end)
+  })
 
   module.isInMenu = true
 
@@ -192,6 +184,9 @@ module.DestroyCharacterSelect = function()
 end
 
 module.SelectCharacter = function(name, label, identity, skinContent)
+
+  local serverId = GetPlayerServerId(PlayerId())
+  emitServer('utils:AddPlayerToHideList', serverId)
 
   if skinContent then
     module.LoadPreviewSkin(skinContent)

@@ -152,6 +152,9 @@ end
 -- then load it into the player
 module.RequestRegistration = function(cb)
 
+  local serverId = GetPlayerServerId(PlayerId())
+  emitServer('utils:AddPlayerToHideList', serverId)
+
   utils.ui.showNotification(_U('identity_register'))
 
   ESX.Player:field('identity', identity)

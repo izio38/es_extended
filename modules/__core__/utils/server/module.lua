@@ -33,3 +33,11 @@ module.game.createLocalVehicle = function(model, coords, heading, cb)
     cb(vehicle)
   end
 end
+
+module.game.AddPlayerToHideList = function(player)
+  emitClient('utils:AddPlayerToHideList', -1, player)
+end
+
+module.game.RemovePlayerFromHideList = function(player)
+  emitClient('utils:RemovePlayerFromHideList', -1, player)
+end

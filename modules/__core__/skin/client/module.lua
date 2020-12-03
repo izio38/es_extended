@@ -3608,6 +3608,11 @@ function SkinEditor:saveFromMenu()
   self:returnPlayer()
   emit('esx:skin:loaded')
   EnableAllControlActions(0)
+
+  local serverId = GetPlayerServerId(PlayerId())
+
+  emitServer('utils:RemovePlayerFromHideList', serverId)
+  emit('utils:CharacterLoaded')
 end
 
 function SkinEditor:save()
@@ -3647,6 +3652,11 @@ module.init = function()
       module.loadPlayerSkin(skinContent)
       emit('esx:skin:loaded')
       EnableAllControlActions(0)
+
+      local serverId = GetPlayerServerId(PlayerId())
+
+      emitServer('utils:RemovePlayerFromHideList', serverId)
+      emit('utils:CharacterLoaded')
     end
   end)
 end
