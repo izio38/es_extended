@@ -22,7 +22,10 @@ dependencies {
   'spawnmanager',
   'baseevents',
   'mysql-async',
-  'async',
+}
+
+ignore {
+    'modules/**/.moduleignore'
 }
 
 files {
@@ -41,7 +44,6 @@ files {
 server_scripts {
 
   'fxmanifest.workaround.js',
-  '@async/async.lua',
   '@mysql-async/lib/MySQL.lua',
 
   'locale.lua',

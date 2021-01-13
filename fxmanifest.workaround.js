@@ -10,32 +10,45 @@
 //   If you redistribute this software, you must link to ORIGINAL repository at https://github.com/ESX-Org/es_extended
 //   This copyright should appear in every part of the project code
 
-const fs   = require('fs');
-const glob = require('glob');
+const fs = require("fs");
+const glob = require("glob");
 
 const cwd = process.cwd();
 
 // CHANGE ME IF NEEDED
-const RESOURCE_PATH = 'resources';
-const RESOURCE_NAME = 'es_extended';
+const RESOURCE_PATH = "resources";
+const RESOURCE_NAME = "es_extended";
 
 // DON'T TOUCH BELOW
-const root         = path.resolve(path.join(cwd, RESOURCE_PATH)).replace('\\', '/');
-const files        = glob.sync('**/' + RESOURCE_NAME + '/fxmanifest*.lua', {cwd: root, nodir: true});
-const MANIFEST     = path.resolve(path.join(root, files.find(e => e.endsWith('fxmanifest.lua'))));
-const MANIFEST_TPL = path.resolve(path.join(root, files.find(e => e.endsWith('fxmanifest.tpl.lua'))));
-const ESX_DIR      = path.dirname(MANIFEST);
-const TPL_DATA     = fs.readFileSync(MANIFEST_TPL).toString();
+const root = path.resolve(path.join(cwd, RESOURCE_PATH)).replace("\\", "/");
+const files = glob.sync("**/" + RESOURCE_NAME + "/fxmanifest*.lua", {
+  cwd: root,
+  nodir: true,
+});
+const MANIFEST = path.resolve(
+  path.join(
+    root,
+    files.find((e) => e.endsWith("fxmanifest.lua"))
+  )
+);
+const MANIFEST_TPL = path.resolve(
+  path.join(
+    root,
+    files.find((e) => e.endsWith("fxmanifest.tpl.lua"))
+  )
+);
+const ESX_DIR = path.dirname(MANIFEST);
+const TPL_DATA = fs.readFileSync(MANIFEST_TPL).toString();
 
 // fengari
-const fengari                                          = require('fengari');
-const { luaopen_js, tojs }                             = require('fengari-interop');
-const lua                                              = fengari.lua;
-const lauxlib                                          = fengari.lauxlib;
-const lualib                                           = fengari.lualib;
-const { to_luastring, to_jsstring }                    = fengari;
+const fengari = require("fengari");
+const { luaopen_js, tojs } = require("fengari-interop");
+const lua = fengari.lua;
+const lauxlib = fengari.lauxlib;
+const lualib = fengari.lualib;
+const { to_luastring, to_jsstring } = fengari;
 const { lua_pop, lua_getglobal, lua_tostring, LUA_OK } = lua;
-const { luaL_requiref }                                = lauxlib;
+const { luaL_requiref } = lauxlib;
 
 const CFX_MANIFEST_LOADER = `
 CFX_METADATA_KEYS = {}
@@ -96,11 +109,10 @@ local mt = {
 _ENV = setmetatable(_G, mt)
 `;
 
-const parseManifest = function(data) {
-
+const parseManifest = function (data) {
   const L = lauxlib.luaL_newstate();
 
-  luaL_requiref(L, to_luastring('js'), luaopen_js, 1);
+  luaL_requiref(L, to_luastring("js"), luaopen_js, 1);
   lua_pop(L, 1);
 
   lualib.luaL_openlibs(L);
@@ -109,135 +121,162 @@ const parseManifest = function(data) {
 
   result = lua.lua_pcall(L, 0, -1, 0);
 
-  if(result !== LUA_OK) {
+  if (result !== LUA_OK) {
     const s = lua_tostring(L, -1);
-    if(s)
-      throw new Error(to_jsstring(s))
+    if (s) throw new Error(to_jsstring(s));
   }
 
   lauxlib.luaL_loadstring(L, to_luastring(data));
 
   result = lua.lua_pcall(L, 0, -1, 0);
 
-  if(result !== LUA_OK) {
+  if (result !== LUA_OK) {
     const s = lua_tostring(L, -1);
-    if(s)
-      throw new Error(to_jsstring(s))
+    if (s) throw new Error(to_jsstring(s));
   }
 
-  lua_getglobal(L, 'CFX_METADATA_KEYS')
+  lua_getglobal(L, "CFX_METADATA_KEYS");
 
-  const keys      = [];
+  const keys = [];
   const keysProxy = tojs(L, 1);
 
   let i = 1;
 
-  while(keysProxy.has(i))
-    keys.push(keysProxy.get(i++));
+  while (keysProxy.has(i)) keys.push(keysProxy.get(i++));
 
-  lua_pop(L, 1)
+  lua_pop(L, 1);
 
-  lua_getglobal(L, 'CFX_METADATA')
+  lua_getglobal(L, "CFX_METADATA");
 
-  const metadata      = {};
+  const metadata = {};
   const metadataProxy = tojs(L, 1);
 
-  for(let i=0; i<keys.length; i++) {
-
-    const key   = keys[i];
-    const ref   = metadataProxy.get(key);
+  for (let i = 0; i < keys.length; i++) {
+    const key = keys[i];
+    const ref = metadataProxy.get(key);
     const entry = [];
 
     let j = 1;
 
-    while(ref.has(j))
-      entry.push(ref.get(j++));
+    while (ref.has(j)) entry.push(ref.get(j++));
 
     metadata[key] = entry;
   }
 
-  lua_pop(L, 1)
+  lua_pop(L, 1);
 
   return metadata;
+};
 
-}
+const buildManifest = function (data, ignoredFiles) {
+  // .moduleignore
+  delete data["ignore"];
 
-const buildManifest = function(data) {
+  console.log(ignoredFiles);
 
-  data.fx_version = data.fx_version || ['bodacious'];
-  data.game       = data.game       || ['gta5'];
+  data.fx_version = data.fx_version || ["bodacious"];
+  data.game = data.game || ["gta5"];
 
-  let manifest = '';
+  let manifest = "";
 
-  for(let k in data) {
+  for (let k in data) {
+    const entries = data[k];
 
-    const entry = data[k];
+    // filter with ignored files
+    const filteredEntries = entries.filter(
+      (entry) => ignoredFiles.indexOf(entry) === -1
+    );
 
-    if(entry.length === 1)
-      manifest += `${k} '${entry[0]}'\n\n`;
+    if (filteredEntries.length === 1)
+      manifest += `${k} '${filteredEntries[0]}'\n\n`;
     else
-      manifest += `${k}s {\n${entry.map(e => '  \'' + e + '\'').join(',\n')}\n}\n\n`;
-
+      manifest += `${k}s {\n${filteredEntries
+        .map((e) => "  '" + e + "'")
+        .join(",\n")}\n}\n\n`;
   }
 
   return manifest;
+};
 
-}
-
-const expand = function(entry) {
-  return glob.sync(entry, {cwd: ESX_DIR, nodir: true});
-}
+const expand = function (entry) {
+  return glob.sync(entry, { cwd: ESX_DIR, nodir: true });
+};
 
 const init = () => {
+  console.log("^7[^4esx^7] checking manifest");
 
-  console.log('^7[^4esx^7] checking manifest');
-
-  const oldManifest    = parseManifest(TPL_DATA);
-  const newManifest    = JSON.parse(JSON.stringify(oldManifest));
+  const oldManifest = parseManifest(TPL_DATA);
+  const newManifest = JSON.parse(JSON.stringify(oldManifest));
   const oldManifestLua = fs.readFileSync(MANIFEST).toString();
 
-  ['file', 'shared_script', 'client_script', 'server_script'].forEach(k => {
-
+  ["file", "shared_script", "client_script", "server_script"].forEach((k) => {
     newManifest[k] = [];
-    const entry    = newManifest[k];
+    const entry = newManifest[k];
     const oldEntry = oldManifest[k] || [];
 
-    for(let i=0; i<oldEntry.length; i++) {
-
+    for (let i = 0; i < oldEntry.length; i++) {
       const line = oldEntry[i];
 
-      if(line[0] == '@') {
+      if (line[0] == "@") {
         entry.push(line);
         continue;
       }
 
       const expanded = expand(line);
 
-      for(let j=0; j<expanded.length; j++)
-        entry.push(expanded[j]);
+      for (let j = 0; j < expanded.length; j++) entry.push(expanded[j]);
     }
-
   });
 
-  const newManifestLua = buildManifest(newManifest);
+  // Get all .moduleignore files
+  const expandedModuleIgnore = oldManifest["ignore"]
+    .map((line) => expand(line))
+    .flat();
+  // For each .moduleignore get the ignored files path
+  const ignoredFiles = expandedModuleIgnore
+    .map((moduleIgnoreFilePath) => {
+      const fromRootModuleIgnoreFilePath = path.resolve(
+        path.join(root, RESOURCE_NAME, moduleIgnoreFilePath)
+      );
 
-  if(newManifestLua === oldManifestLua) {
+      const globToExcludeFile = fs
+        .readFileSync(fromRootModuleIgnoreFilePath)
+        .toString();
+      const globToExcludeLines = globToExcludeFile.split("\n");
 
-    console.log('^7[^4esx^7] ^2no changes required in fxmanifest.lua^7');
+      const filesToExclude = globToExcludeLines
+        .map((globToExcludeLine) => {
+          return glob.sync(
+            path.join(path.dirname(moduleIgnoreFilePath), globToExcludeLine),
+            {
+              cwd: path.join(ESX_DIR),
+              nodir: true,
+            }
+          );
+        })
+        .flat();
+
+      return filesToExclude;
+    })
+    .flat();
+
+  const newManifestLua = buildManifest(newManifest, ignoredFiles);
+
+  if (newManifestLua === oldManifestLua) {
+    console.log("^7[^4esx^7] ^2no changes required in fxmanifest.lua^7");
 
     process.nextTick(() => {
-      emit('esx:manifest:check:pass');
+      emit("esx:manifest:check:pass");
     });
-
   } else {
-
-    console.log('^7[^4esx^7] ^1fxmanifest.lua has changed, you MUST type ^4ensure es_extended^1 in the console^7');
+    console.log(
+      "^7[^4esx^7] ^1fxmanifest.lua has changed, you MUST type ^4ensure es_extended^1 in the console^7"
+    );
 
     fs.writeFileSync(MANIFEST, newManifestLua);
 
-    ExecuteCommand('refresh');
+    ExecuteCommand("refresh");
   }
-
-}
+};
 
 init();
