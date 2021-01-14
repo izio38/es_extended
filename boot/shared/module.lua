@@ -78,12 +78,18 @@ ESX.EvalFile = function(resource, file, env)
   env           = env or {}
   env._G        = env
   local code    = LoadResourceFile(resource, file)
-  local fn      = load(code, '@' .. resource .. ':' .. file, 't', env)
+  local fn, err = load(code, '@' .. resource .. ':' .. file, 't', env)
+
   local success = true
+
+  if (err) then
+    ESX.LogError(err, '@' .. resource .. ':' .. file)
+    return env, success
+  end 
 
   local status, result = xpcall(fn, function(err)
     success = false
-    ESX.LogError(err, trace, '@' .. resource .. ':' .. file)
+    ESX.LogError(err, '@' .. resource .. ':' .. file)
   end)
 
   return env, success
