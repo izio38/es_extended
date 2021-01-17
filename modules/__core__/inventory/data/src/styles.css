@@ -1,0 +1,28 @@
+.white {
+    color: white;
+}
+
+.tab-pane-dark {
+    background-color:rgba(60, 60, 60, 0.8) !important;
+    border-color: black !important;
+}
+
+.modal .header {
+    background-color: rgb(60, 60, 60, 0.5) !important;
+    color: white !important ;
+}
+.modal .content {
+    background-color: rgb(60, 60, 60, 0.5) !important;
+    color: white !important ;
+}
+.modal .actions {
+    background-color: rgb(60, 60, 60, 0.5) !important;
+    color: white !important ;
+}
+.modal button.primary {
+    color: rgb(0, 0, 0) !important;
+    background-color: orange !important;
+}
+.ui.modal {
+    background-color: rgb(60, 60, 60, 0.5);
+}
