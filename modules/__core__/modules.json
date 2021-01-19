@@ -13,6 +13,7 @@
     "identity",
     "input",
     "interact",
+    "item",
     "inventory",
     "math",
     "migrate",
