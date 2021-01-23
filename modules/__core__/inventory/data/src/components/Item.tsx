@@ -25,7 +25,7 @@ const Quantity = styled.span`
 
 type ItemProps = {
   index: number;
-  item: { id: number; name: string; quantity: number };
+  item: { name: string; quantity: number };
   moveItem: (dragId: number, hoverId: number) => void;
 };
 
@@ -88,7 +88,7 @@ export const Item: React.FC<ItemProps> = ({ index, moveItem, item }) => {
     }),
   });
 
-  const opacity = isDragging ? 0 : 1;
+  const opacity = isDragging ? 0.5 : 1;
   drag(drop(ref));
 
   return (

@@ -7,7 +7,7 @@ import "styles/input-range.scss";
 type RangeSelectorModalProps = {
   targetPlayer?: { name: string; playerId: string };
   itemCount: number;
-  item?: { id: number; name: string; quantity: number };
+  item?: { name: string; quantity: number };
   isOpen: boolean;
   onClose: () => void;
   onConfirm: (selectedValue: number) => void;

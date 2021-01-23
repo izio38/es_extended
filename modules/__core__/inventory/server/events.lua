@@ -18,9 +18,17 @@ on("esx:player:load", function(player)
     }, {
       owner = "identity:" .. identityOwner,
     }, function(inventory)
-      print("Loaded identity inventory " .. identity:getFirstName() .. " " identity:getLastName())
+      print("Loaded identity inventory " .. identity:getFirstName() .. " " .. identity:getLastName())
       Inventory.all[inventory.owner] = inventory
       identity:field("inventory", inventory)
+
+      emitClient("esx:inventory:loaded", player:getSource(), inventory:serialize())
     end)
   end)
+end)
+
+onRequest('esx:inventory:get', function(source, cb)
+  local inventory = Player.fromId(source):getIdentity():getInventory()
+
+  cb(inventory:serialize())
 end)

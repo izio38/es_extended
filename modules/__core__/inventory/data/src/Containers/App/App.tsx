@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { DndProvider } from "react-dnd";
-import { HTML5Backend } from "react-dnd-html5-backend";
+import { TouchBackend } from "react-dnd-touch-backend";
 import styled from "styled-components";
 import { Item } from "../../components/Item";
 import update from "immutability-helper";
@@ -9,6 +9,9 @@ import { RangeSelectorModal } from "../../components/RangeSelectorModal";
 import { playerInventoryMock } from "../../mocks/player-inventory-mock";
 import { nearPlayersMock } from "../../mocks/near-players.mock";
 import { useIsBrowser } from "../../hooks/useIsBrowser";
+import { useNuiQuery } from "../../hooks/useNuiQuery";
+import { useNuiEvent } from "../../hooks/useNuiEvent";
+import { ItemPreview } from "../../components/ItemPreview";
 
 const Container = styled.div`
   display: flex;
@@ -116,7 +119,7 @@ const InterractionContainer = styled.div`
   }
 `;
 
-export type Item = { id: number; name: string; quantity: number };
+export type Item = { name: string; quantity: number };
 
 export type Player = { name: string; playerId: string };
 
@@ -124,7 +127,7 @@ const App = () => {
   const [modalMetadata, setModalMetadata] = useState<{
     targetPlayer?: { name: string; playerId: string };
     itemCount?: number;
-    item?: { id: number; name: string; quantity: number };
+    item?: { name: string; quantity: number };
     isOpen: boolean;
   }>({ isOpen: false });
 
@@ -133,6 +136,11 @@ const App = () => {
   const [items, setItems] = useState<Item[]>([]);
   const [nearPlayers, setNearPlayers] = useState<Player[]>([]);
 
+  const [closeQuery] = useNuiQuery("close");
+  useNuiEvent(({ data }) => {
+    setItems(data.content);
+  }, "openSelfInventory");
+
   // Set default mock values if we're on browser
   useEffect(() => {
     if (isBrowser) {
@@ -140,6 +148,21 @@ const App = () => {
       setNearPlayers(nearPlayersMock);
     }
   }, [isBrowser]);
+
+  // Close on escape
+  useEffect(() => {
+    const handleEsc = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        console.log("Close");
+        closeQuery();
+      }
+    };
+    window.addEventListener("keydown", handleEsc);
+
+    return () => {
+      window.removeEventListener("keydown", handleEsc);
+    };
+  }, []);
 
   const moveItem = useCallback(
     (dragIndex: number, hoverIndex: number) => {
@@ -185,15 +208,19 @@ const App = () => {
           </div> */}
         </InventoryInformations>
         <ItemsContainer>
-          <DndProvider backend={HTML5Backend}>
+          <DndProvider
+            backend={TouchBackend}
+            options={{ enableMouseEvents: true, enableTouchEvents: false }}
+          >
             {items.map((item, index) => (
               <Item
-                key={item.id}
+                key={item.name}
                 item={item}
                 index={index}
                 moveItem={moveItem}
               />
             ))}
+            <ItemPreview items={items} />
           </DndProvider>
         </ItemsContainer>
       </InventoryContainerAlone>
@@ -201,7 +228,7 @@ const App = () => {
       <InterractionContainer
         style={{ visibility: nearPlayers.length > 0 ? "visible" : "hidden" }}
       >
-        <DndProvider backend={HTML5Backend}>
+        <DndProvider backend={TouchBackend} options={{}}>
           {nearPlayers.map((nearPlayer) => (
             <PlayerTarget
               key={nearPlayer.playerId}
