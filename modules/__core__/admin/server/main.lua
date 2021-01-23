@@ -235,6 +235,36 @@ KickAll:setHandler(function(player, args)
   end
 end)
 
+local AddItem = Command("additem", "admin", "Add x amount of item to the current player identity inventory")
+AddItem:addArgument("player", "player", "target player server id")
+AddItem:addArgument("item", "string", "item name to add")
+AddItem:addArgument("amount", "number", "amount to add")
+AddItem:setRconAllowed(true)
+AddItem:setHandler(function(player, args)
+  if (args.player and args.item and args.amount) then
+    local targetPlayerInventory = args.player:getIdentity():getInventory()
+
+    targetPlayerInventory:add(args.item, args.amount)
+
+    targetPlayerInventory:save()
+  end
+end)
+
+local DeleteItem = Command("delItem", "admin", "delete x amount of item to the current player identity inventory")
+DeleteItem:addArgument("player", "player", "target player server id")
+DeleteItem:addArgument("item", "string", "item name to delete")
+DeleteItem:addArgument("amount", "number", "amount to delete")
+DeleteItem:setRconAllowed(true)
+DeleteItem:setHandler(function(player, args)
+  if (args.player and args.item and args.amount) then
+    local targetPlayerInventory = args.player:getIdentity():getInventory()
+
+    targetPlayerInventory:remove(args.item, args.amount)
+
+    targetPlayerInventory:save()
+  end
+end)
+
 SpawnProp:register()
 TeleportToMarker:register()
 TeleportToPlayer:register()
@@ -253,3 +283,5 @@ KillPlayer:register()
 SetPlayerArmor:register()
 KickPlayer:register()
 KickAll:register()
+AddItem:register()
+DeleteItem:register()
