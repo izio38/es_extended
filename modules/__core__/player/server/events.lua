@@ -26,6 +26,7 @@ AddEventHandler('playerDropped', function(reason)
 
 		emit('esx:player:drop', player, reason)
 
+    -- @TODO: move this in identity using the esx:player:drop event
     if player.identity ~= nil then
       player.identity:save(function()
         Identity.all[player.identity.id] = nil
