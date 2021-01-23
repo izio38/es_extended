@@ -1,32 +1,17 @@
+M('class')
 M('persistent')
 M('events')
 M('table')
 M('item')
 
-Inventory = Persist('inventories', 'id', EventEmitter)
+local InventoryMixin = Extends(nil, 'InventoryMixin')
 
-Inventory.define({
-  {name = 'id',         field = {name = 'id',         type = 'INT',        length = nil, default = nil,                   extra = 'NOT NULL AUTO_INCREMENT'}},
-  {name = 'identifier', field = {name = 'identifier', type = 'VARCHAR',    length = 64,  default = 'UUID()',              extra = 'NOT NULL'}},
-  {name = 'owner',      field = {name = 'owner',      type = 'VARCHAR',    length = 64,  default  = nil,                  extra = 'NOT NULL'}},
-  {name = 'content',    field = {name = 'content',    type = 'JSON',       length = nil, default = json.encode({}),       extra = 'NOT NULL'}, encode = json.encode, decode = json.decode},
-})
-
-Inventory.all = setmetatable({}, {
-  __index    = function(t, k) return rawget(t, tostring(k)) end,
-  __newindex = function(t, k, v) rawset(t, tostring(k), v) end,
-})
-
-Inventory.fromOwner = function(owner)
-  return Identity.all[owner]
-end
-
-function Inventory:constructor(data)
-  self.super:ctor(data)
+function InventoryMixin:constructor()
+  self.test = "nil"
 end
 
 -- @TODO: metadata
-function Inventory:add(itemName, quantity, metadata)
+function InventoryMixin:add(itemName, quantity, metadata)
   if not(Items[itemName]) then
     ESX.LogWarning(("Cannot add %i %s, %s isn't registered."):format(quantity, itemName, itemName))
     return self
@@ -49,7 +34,7 @@ function Inventory:add(itemName, quantity, metadata)
 end
 
 -- @TODO: metadata
-function Inventory:remove(itemName, quantity, metadata)
+function InventoryMixin:remove(itemName, quantity, metadata)
   if not(Items[itemName]) then
     ESX.LogWarning(("Cannot remove %i %s, %s isn't registered."):format(quantity, itemName, itemName))
     return self
@@ -83,7 +68,7 @@ function Inventory:remove(itemName, quantity, metadata)
   return self
 end
 
-function Inventory:has(itemName, quantity)
+function InventoryMixin:has(itemName, quantity)
   if not(Items[itemName]) then
     ESX.LogWarning(("Cannot say if inventory has %i %s, %s isn't registered."):format(quantity, itemName, itemName))
     return self
@@ -96,4 +81,22 @@ function Inventory:has(itemName, quantity)
   end)
 
   return (existingItem and existingItem.quantity >= quantity)
+end
+
+Inventory = Persist('inventories', 'id', EventEmitter, InventoryMixin)
+
+Inventory.define({
+  {name = 'id',         field = {name = 'id',         type = 'INT',        length = nil, default = nil,                   extra = 'NOT NULL AUTO_INCREMENT'}},
+  {name = 'identifier', field = {name = 'identifier', type = 'VARCHAR',    length = 64,  default = 'UUID()',              extra = 'NOT NULL'}},
+  {name = 'owner',      field = {name = 'owner',      type = 'VARCHAR',    length = 64,  default  = nil,                  extra = 'NOT NULL'}},
+  {name = 'content',    field = {name = 'content',    type = 'JSON',       length = nil, default = json.encode({}),       extra = 'NOT NULL'}, encode = json.encode, decode = json.decode},
+})
+
+Inventory.all = setmetatable({}, {
+  __index    = function(t, k) return rawget(t, tostring(k)) end,
+  __newindex = function(t, k, v) rawset(t, tostring(k), v) end,
+})
+
+Inventory.fromOwner = function(owner)
+  return Identity.all[owner]
 end
