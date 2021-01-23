@@ -204,6 +204,9 @@ Persist = function(schema, pk, ...)
 
     local count = 0
 
+    -- @TODO: find a way to do this below in a generic way (to not have arbitrary string)
+    -- According to Ark, player:getIdentity():position isn't updated since the player loaded
+    -- And we don't want to override when doing `player.save()`. We might need a fix to improve this part.
     if tostring(schema) == "identities" then
       for k,v in pairs(fields) do
         if tostring(k) == "position" or tostring(k) == "roles" or tostring(k) == "status" or tostring(k) == "accounts" then
