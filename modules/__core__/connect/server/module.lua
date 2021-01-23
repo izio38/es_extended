@@ -1,7 +1,5 @@
 M('persistent')
 
-print(json.encode(Config.Modules))
-
 Ban, BanBase = Persist('bans', 'id')
 
 Ban.define({
