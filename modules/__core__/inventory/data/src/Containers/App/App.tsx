@@ -12,6 +12,7 @@ import { useIsBrowser } from "../../hooks/useIsBrowser";
 import { useNuiQuery } from "../../hooks/useNuiQuery";
 import { useNuiEvent } from "../../hooks/useNuiEvent";
 import { ItemPreview } from "../../components/ItemPreview";
+import { hasItemsPositionChanged } from "../../utils/has-items-position-changed";
 
 const Container = styled.div`
   display: flex;
@@ -121,11 +122,11 @@ const InterractionContainer = styled.div`
 
 export type Item = { name: string; quantity: number };
 
-export type Player = { name: string; playerId: string };
+export type Player = { distance: number; playerId: string };
 
 const App = () => {
   const [modalMetadata, setModalMetadata] = useState<{
-    targetPlayer?: { name: string; playerId: string };
+    targetPlayer?: { distance: number; playerId: string };
     itemCount?: number;
     item?: { name: string; quantity: number };
     isOpen: boolean;
@@ -134,16 +135,26 @@ const App = () => {
   const isBrowser = useIsBrowser();
 
   const [items, setItems] = useState<Item[]>([]);
+  const [baseItems, setBaseItems] = useState<Item[]>([]);
   const [nearPlayers, setNearPlayers] = useState<Player[]>([]);
 
   const [closeQuery] = useNuiQuery("close");
+  const [reorderQuery] = useNuiQuery("reorder");
+  const [giveQuery] = useNuiQuery("give");
+
   useNuiEvent(({ data }) => {
+    setBaseItems(data.content);
     setItems(data.content);
-  }, "openSelfInventory");
+  }, "updateSelfInventory");
+
+  useNuiEvent(({ data }) => {
+    setNearPlayers(data);
+  }, "updateNearPlayers");
 
   // Set default mock values if we're on browser
   useEffect(() => {
     if (isBrowser) {
+      setBaseItems(playerInventoryMock.items);
       setItems(playerInventoryMock.items);
       setNearPlayers(nearPlayersMock);
     }
@@ -153,7 +164,13 @@ const App = () => {
   useEffect(() => {
     const handleEsc = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        console.log("Close");
+        // Check is items position has changed
+        const hasPositionChanged = hasItemsPositionChanged(baseItems, items);
+
+        if (hasPositionChanged) {
+          reorderQuery({ items });
+        }
+
         closeQuery();
       }
     };
@@ -162,7 +179,7 @@ const App = () => {
     return () => {
       window.removeEventListener("keydown", handleEsc);
     };
-  }, []);
+  }, [items, baseItems, reorderQuery, closeQuery]);
 
   const moveItem = useCallback(
     (dragIndex: number, hoverIndex: number) => {
@@ -180,9 +197,8 @@ const App = () => {
   );
 
   const onItemDropOnPlayerTarget = useCallback(
-    (dragItem: any, player: { name: string; playerId: string }) => {
+    (dragItem: any, player: { distance: number; playerId: string }) => {
       const item = items[dragItem.index];
-      console.log("Drop on Player Target", item, player);
 
       setModalMetadata({
         targetPlayer: player,
@@ -234,7 +250,7 @@ const App = () => {
               key={nearPlayer.playerId}
               onDrop={(item: any) => onItemDropOnPlayerTarget(item, nearPlayer)}
             >
-              {nearPlayer.name}
+              {nearPlayer.playerId} ({nearPlayer.distance} meters)
             </PlayerTarget>
           ))}
         </DndProvider>
@@ -244,7 +260,17 @@ const App = () => {
       <RangeSelectorModal
         onClose={() => setModalMetadata({ isOpen: false })}
         onConfirm={(selectedItemCount) => {
-          console.log(selectedItemCount);
+          const hasPositionChanged = hasItemsPositionChanged(baseItems, items);
+
+          if (hasPositionChanged) {
+            reorderQuery({ items });
+          }
+
+          giveQuery({
+            name: modalMetadata.item?.name,
+            quantity: selectedItemCount,
+            playerId: modalMetadata.targetPlayer?.playerId,
+          });
 
           setModalMetadata({ isOpen: false });
         }}

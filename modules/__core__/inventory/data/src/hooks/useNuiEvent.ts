@@ -18,8 +18,6 @@ export const useNuiEvent = <T = any>(
     const eventHandler = (event: MessageEvent<any>) => {
       const { data } = event;
 
-      console.log(data);
-
       if (data.action === action) {
         handler(data);
       }

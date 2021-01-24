@@ -5,7 +5,7 @@ import styled from "styled-components";
 import "styles/input-range.scss";
 
 type RangeSelectorModalProps = {
-  targetPlayer?: { name: string; playerId: string };
+  targetPlayer?: { distance: number; playerId: string };
   itemCount: number;
   item?: { name: string; quantity: number };
   isOpen: boolean;
@@ -38,7 +38,8 @@ export const RangeSelectorModal: React.FC<RangeSelectorModalProps> = ({
       onClose={onClose}
     >
       <Modal.Header>
-        Give x{selectedValue} {item?.name} to {targetPlayer?.name}
+        Give x{selectedValue} {item?.name} to {targetPlayer?.playerId} (
+        {targetPlayer?.distance} meters)
       </Modal.Header>
       <Modal.Content>
         {itemCount > 1 ? (

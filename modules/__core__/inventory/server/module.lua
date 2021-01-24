@@ -83,6 +83,40 @@ function InventoryMixin:has(itemName, quantity)
   return (existingItem and existingItem.quantity >= quantity)
 end
 
+function InventoryMixin:hasExactly(itemName, quantity)
+  if not(Items[itemName]) then
+    ESX.LogWarning(("Cannot say if inventory has %i %s, %s isn't registered."):format(quantity, itemName, itemName))
+    return self
+  end
+
+  quantity = quantity or 0
+
+  local existingItem = table.find(self.content, function(item) 
+    return item.name == itemName
+  end)
+
+  return (existingItem and existingItem.quantity == quantity)
+end
+
+function InventoryMixin:reorder(items)
+  local isAuthorizeToReorder = true
+
+  for i=1,#items do
+    if not(self:hasExactly(items[i].name, items[i].quantity)) then
+      isAuthorizeToReorder = false
+      break
+    end
+  end
+
+  if not(isAuthorizeToReorder) then
+    ESX.LogWarning(("Someone tried to cheat (give item) when reordering inventory, identory identifier: %s, owner: %s."):format(self.identifier, self.owner))
+    return
+  end
+
+  -- we're safe to reorder here
+  self.content = items
+end
+
 Inventory = Persist('inventories', 'id', EventEmitter, InventoryMixin)
 
 Inventory.define({

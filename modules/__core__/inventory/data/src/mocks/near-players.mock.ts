@@ -1,30 +1,26 @@
 export const nearPlayersMock = [
   {
-    name: "Ark",
+    distance: 5.0,
     playerId: "1",
   },
   {
-    name: "ItsChip",
+    distance: 1.32,
     playerId: "2",
   },
   {
-    name: "IzioDev",
+    distance: 2.4,
     playerId: "3",
   },
   {
-    name: "Microsoft",
+    distance: 6.5,
     playerId: "4",
   },
   {
-    name: "Feez",
+    distance: 10,
     playerId: "5",
   },
   {
-    name: "Taso",
+    distance: 8.9,
     playerId: "6",
-  },
-  {
-    name: "Felangel",
-    playerId: "7",
   },
 ];

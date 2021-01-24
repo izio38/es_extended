@@ -70,7 +70,7 @@ export const Item: React.FC<ItemProps> = ({ index, moveItem, item }) => {
         return;
       }
 
-      if (dragIndex > hoverIndex && hoverClientX < hoverMiddleX) {
+      if (dragIndex < hoverIndex && hoverClientX < hoverMiddleX) {
         return;
       }
 

@@ -7,6 +7,18 @@ module.Init = function()
   module.Frame:on('close', function()
     module.CloseInventory()
   end)
+
+  module.Frame:on('reorder', function(data)
+    emitServer('esx:inventory:reorder', data.items)
+  end)
+
+  module.Frame:on('give', function(data)
+    emitServer('esx:inventory:give', {
+      name = data.name,
+      quantity = data.quantity,
+      target = "player:" .. data.playerId
+    })
+  end)
 end
 
 module.OpenInventory = function()
@@ -23,10 +35,38 @@ module.OpenInventory = function()
   request("esx:inventory:get", function(inventory)
     if not(inventory == nil) then
 
-      print(json.encode(inventory))
+      -- get near player loop
+      Citizen.CreateThread(function()
+        while module.Frame.visible do
+
+          local playerCoords = GetEntityCoords(GetPlayerPed(-1))
+          local nearPlayers = {}
+          for _, playerId in ipairs(GetActivePlayers()) do
+            -- do not add the current player
+            -- if not(playerId == 0) then
+              local otherPlayerCoords = GetEntityCoords(GetPlayerPed(playerId))              
+
+              local distance = #(playerCoords - otherPlayerCoords)
+              if (distance) <= 5 then
+                table.insert(nearPlayers, {playerId = GetPlayerServerId(playerId), distance = (math.ceil(distance * 100) / 100) })
+              end
+            -- end
+          end
+
+          module.Frame:postMessage({
+            action = 'updateNearPlayers',
+            -- @TODO: only map properties that are required on the ui side
+            -- for now, we're sending all the datas we have on inventory
+            data = nearPlayers
+          })
+
+          -- avoid lags, but less precise
+          Wait(1000)
+        end
+      end)
 
       module.Frame:postMessage({
-        action = 'openSelfInventory',
+        action = 'updateSelfInventory',
         -- @TODO: only map properties that are required on the ui side
         -- for now, we're sending all the datas we have on inventory
         data = inventory
@@ -42,4 +82,13 @@ end
 module.CloseInventory = function()
   module.Frame:hide()
   module.Frame:unfocus()
+end
+
+module.UpdateInventory = function(inventory)
+  module.Frame:postMessage({
+    action = 'updateSelfInventory',
+    -- @TODO: only map properties that are required on the ui side
+    -- for now, we're sending all the datas we have on inventory
+    data = inventory
+  })
 end
